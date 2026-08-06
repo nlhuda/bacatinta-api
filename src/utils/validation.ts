@@ -1,6 +1,9 @@
 import type { ContactForm } from "../types/contact";
 
-export function validateContact(data: Partial<ContactForm>) {
+export function validateContact(
+  data: Partial<ContactForm>
+): string | null {
+  
   if (!data.name?.trim()) {
     return "Name is required.";
   }
