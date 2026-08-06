@@ -1,12 +1,12 @@
 export function success(
   message: string,
-  requestId: string,
+  requestId?: string,
   data?: unknown
 ) {
   return {
     success: true,
-    message,
     requestId,
+    message,
     timestamp: new Date().toISOString(),
     data,
   };
@@ -14,13 +14,15 @@ export function success(
 
 export function failure(
   message: string,
-  requestId: string,
+  requestId?: string,
+  code?: string,
   data?: unknown
 ) {
   return {
     success: false,
-    message,
     requestId,
+    code,
+    message,
     timestamp: new Date().toISOString(),
     data,
   };

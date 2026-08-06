@@ -1,5 +1,5 @@
 import { json } from "../utils/cors";
-import { success } from "../utils/response";
+import { success } from "../core/http/response";
 
 export async function healthHandler(
     request: Request

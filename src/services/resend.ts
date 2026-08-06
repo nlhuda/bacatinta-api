@@ -1,12 +1,9 @@
 import { Resend } from "resend";
-
 import type { ContactForm } from "../types/contact";
 import type { WorkerEnv } from "../types/env";
-
-import { config } from "../config";
-
 import { adminEmailTemplate } from "../templates/admin-email";
 import { confirmationEmailTemplate } from "../templates/confirmation-email";
+import { EMAIL } from "../config/email";
 
 export async function sendContactEmail(
   data: ContactForm,
@@ -18,8 +15,8 @@ export async function sendContactEmail(
 
     // Email to you
     resend.emails.send({
-      from: `${config.email.senderName} <${config.email.senderEmail}>`,
-      to: [config.email.adminEmail],
+      from: `${EMAIL.senderName} <${EMAIL.senderEmail}>`,
+      to: [EMAIL.adminEmail],
       replyTo: data.email,
       subject: `New Inquiry from ${data.name}`,
       html: adminEmailTemplate(data),
@@ -27,9 +24,9 @@ export async function sendContactEmail(
 
     // Confirmation email to the user
     resend.emails.send({
-      from: `${config.email.senderName} <${config.email.senderEmail}>`,
+      from: `${EMAIL.senderName} <${EMAIL.senderEmail}>`,
       to: [data.email],
-      replyTo: config.email.adminEmail,
+      replyTo: EMAIL.adminEmail,
       subject: "Thank you for contacting Bacatinta",
       html: confirmationEmailTemplate(data),
     }),

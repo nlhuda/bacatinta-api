@@ -2,7 +2,8 @@ import { contactHandler } from "./routes/contact";
 import { json, getCorsHeaders } from "./utils/cors";
 import type { WorkerEnv } from "./types/env";
 import { healthHandler } from "./routes/health";
-import { Routes } from "./constants/routes";
+import { Routes } from "./config/routes";
+import { HTTP } from "./core/http/status";
 
 export async function router(
   request: Request,
@@ -38,7 +39,7 @@ export async function router(
       message: "Endpoint not found.",
       timestamp: new Date().toISOString(),
     },
-    404,
+    HTTP.NOT_FOUND,
     origin
   );
 }

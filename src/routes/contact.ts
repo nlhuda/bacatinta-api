@@ -1,19 +1,22 @@
 import { json } from "../utils/cors";
-import { validateContact } from "../utils/validation";
+import { validateContactForm } from "../core/validation/contact";
 import type { ContactForm } from "../types/contact";
 import { sendContactEmail } from "../services/resend";
 import type { WorkerEnv } from "../types/env";
-import { success, failure } from "../utils/response";
+import { success, failure } from "../core/http/response";
 import { verifyTurnstile } from "../services/turnstile";
 import { getRequestId } from "../middleware/request-id";
 import { createLogger } from "../utils/request-logger";
+import { HTTP } from "../core/http/status";
+import { ERROR } from "../core/errors/codes";
 
 
 export async function contactHandler(
     request: Request,
     env: WorkerEnv
     ) {
-
+    
+  const startedAt = Date.now();
   const requestId = getRequestId(request); 
   const logger = createLogger(
   requestId,
@@ -23,13 +26,13 @@ export async function contactHandler(
   logger.info("Incoming request");
 
   const origin = request.headers.get("Origin");
-  const body = await request.json() as ContactForm;
+  const body: ContactForm = await request.json();
 
   if (!body.turnstileToken) {
   return json(
     failure("Missing Turnstile token.",
     requestId),
-    400,
+    HTTP.BAD_REQUEST,
     origin
   );
 }
@@ -43,27 +46,33 @@ if (!turnstile.success) {
 
   return json(
     failure(
-      turnstile["error-codes"]?.join(", ") ??
-      "Turnstile verification failed.",
-    requestId
-    ),
-    403,
+    turnstile["error-codes"]?.join(", ")
+      ?? "Turnstile verification failed.",
+    requestId,
+    ERROR.TURNSTILE
+  ),
+    HTTP.FORBIDDEN,
     origin
   );
 }
 
 logger.info("Turnstile verified");
 
-  const error = validateContact(body);
+  const validation = validateContactForm(body);
 
-  if (error) {
-    return json(
-    failure("Validation failed.",
-    requestId),
-    400,
+if (!validation.valid) {
+  logger.warn("Validation failed", validation);
+
+  return json(
+    failure(
+      validation.message ?? "Validation failed.",
+      requestId,
+      ERROR.VALIDATION
+    ),
+    HTTP.BAD_REQUEST,
     origin
-    );
-  }
+  );
+}
 
    logger.info("Validation passed");
 
@@ -76,7 +85,7 @@ logger.info("Turnstile verified");
     success(
       "Message received successfully.",
       requestId),
-      200,
+      HTTP.OK,
       origin
     );
 
@@ -84,14 +93,20 @@ logger.info("Turnstile verified");
     
       logger.error(
         "Failed to send email",
-        error
+        {
+        error,
+        duration: Date.now() - startedAt,
+        }
       );
 
     return json(
-    failure("Validation failed.",
-    requestId),
-    500, 
-    origin
-);
+  failure(
+      "Failed to send email.",
+      requestId,
+      ERROR.EMAIL
+      ),
+      HTTP.INTERNAL_SERVER_ERROR,
+      origin
+    );
   }
 }
