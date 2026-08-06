@@ -18,8 +18,8 @@ export async function sendContactEmail(
 
     // Email to you
     resend.emails.send({
-      from: `${config.senderName} <${config.senderEmail}>`,
-      to: [config.adminEmail],
+      from: `${config.email.senderName} <${config.email.senderEmail}>`,
+      to: [config.email.adminEmail],
       replyTo: data.email,
       subject: `New Inquiry from ${data.name}`,
       html: adminEmailTemplate(data),
@@ -27,9 +27,9 @@ export async function sendContactEmail(
 
     // Confirmation email to the user
     resend.emails.send({
-      from: `${config.senderName} <${config.senderEmail}>`,
+      from: `${config.email.senderName} <${config.email.senderEmail}>`,
       to: [data.email],
-      replyTo: config.adminEmail,
+      replyTo: config.email.adminEmail,
       subject: "Thank you for contacting Bacatinta",
       html: confirmationEmailTemplate(data),
     }),
