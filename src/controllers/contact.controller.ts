@@ -1,111 +1,78 @@
 import { json } from "../utils/cors";
 import { validateContactForm } from "../core/validation/contact";
 import type { ContactForm } from "../types/contact";
-import { sendContactEmail } from "../services/resend";
 import type { WorkerEnv } from "../types/env";
-import { success, failure } from "../core/http/response";
+import { success } from "../core/http/response";
 import { verifyTurnstile } from "../services/turnstile";
-import { getRequestId } from "../middleware/request-id";
-import { createLogger } from "../utils/request-logger";
-import { HTTP } from "../core/http/status";
-import { ERROR } from "../core/errors/codes";
+import { ValidationError } from "../core/errors/validation-error";
+import { TurnstileError } from "../core/errors/turnstile-error";
 import { processContact } from "../services/contact.service";
+import { asyncHandler } from "../middleware/async-handler";
+import { createRequestContext } from "../core/http/request-context";
 
-export async function handleContact(
+export const handleContact = asyncHandler(async (
   request: Request,
   env: WorkerEnv
-) {
-  const startedAt = Date.now();
-    const requestId = getRequestId(request); 
-    const logger = createLogger(
-    requestId,
+) => {
+  
+    const ctx = createRequestContext(
+    request,
     "/v1/contact"
     );
   
-    logger.info("Incoming request");
+    ctx.logger.info("Incoming request");
   
-    const origin = request.headers.get("Origin");
     const body: ContactForm = await request.json();
   
     if (!body.turnstileToken) {
-    return json(
-      failure("Missing Turnstile token.",
-      requestId),
-      HTTP.BAD_REQUEST,
-      origin
-    );
-  }
-    const turnstile = await verifyTurnstile(
-    body.turnstileToken,
-    env
-  );
-  
-  if (!turnstile.success) {
-    console.error("Turnstile failed:", turnstile);
-  
-    return json(
-      failure(
-      turnstile["error-codes"]?.join(", ")
-        ?? "Turnstile verification failed.",
-      requestId,
-      ERROR.TURNSTILE
-    ),
-      HTTP.FORBIDDEN,
-      origin
-    );
-  }
-  
-  logger.info("Turnstile verified");
-  
-    const validation = validateContactForm(body);
-  
-  if (!validation.valid) {
-    logger.warn("Validation failed", validation);
-  
-    return json(
-      failure(
-        validation.message ?? "Validation failed.",
-        requestId,
-        ERROR.VALIDATION
-      ),
-      HTTP.BAD_REQUEST,
-      origin
-    );
-  }
-  
-     logger.info("Validation passed");
-  
-    try {
-      await processContact(body, env);
-  
-     logger.info("Email sent");
-  
-      return json(
-      success(
-        "Message received successfully.",
-        requestId),
-        HTTP.OK,
-        origin
-      );
-  
-      } catch (error) {
-      
-        logger.error(
-          "Failed to send email",
-          {
-          error,
-          duration: Date.now() - startedAt,
-          }
-        );
-  
-      return json(
-    failure(
-        "Failed to send email.",
-        requestId,
-        ERROR.EMAIL
-        ),
-        HTTP.INTERNAL_SERVER_ERROR,
-        origin
+      throw new ValidationError(
+        "Missing Turnstile token."
       );
     }
-}
+    
+    const turnstile = await verifyTurnstile(
+      body.turnstileToken,
+      env
+    );
+  
+  if (!turnstile.success) {
+    ctx.logger.warn(
+      "Turnstile failed", 
+      turnstile);
+    
+      throw new TurnstileError();
+    }
+  
+  ctx.logger.info("Turnstile verified");
+  
+  const validation = validateContactForm(body);
+  
+  if (!validation.valid) {
+    ctx.logger.warn(
+      "Validation failed", 
+      validation
+    );
+
+    throw new ValidationError(
+      validation.message ?? "Validation failed"
+    );
+  }
+  
+    ctx.logger.info("Validation passed");
+    
+    await processContact(body, env);
+  
+    ctx.logger.info("Email sent", {
+      duration: Date.now() - ctx.startedAt,
+    });
+  
+    return json(
+      success(
+        "Message received successfully.",
+        ctx.requestId
+      ),
+        200,
+        ctx.origin
+      );  
+    }
+)

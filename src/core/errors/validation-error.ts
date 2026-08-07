@@ -1,16 +1,13 @@
 import { AppError } from "./app-error";
 import { HTTP } from "../http/status";
+import { ERROR } from "./codes";
 
 export class ValidationError extends AppError {
-
   constructor(message: string) {
-
     super(
       message,
-      "VALIDATION_ERROR",
-      HTTP.BAD_REQUEST
+      HTTP.BAD_REQUEST,
+      ERROR.VALIDATION
     );
-
   }
-
 }
