@@ -4,12 +4,15 @@ import type { WorkerEnv } from "../types/env";
 import { adminEmailTemplate } from "../templates/admin-email";
 import { confirmationEmailTemplate } from "../templates/confirmation-email";
 import { EMAIL } from "../config/email";
+import { createResendClient }
+from "../core/services/resend";
 
 export async function sendContactEmail(
   data: ContactForm,
   env: WorkerEnv
 ) {
-  const resend = new Resend(env.RESEND_API_KEY);
+  const resend =
+    createResendClient(env);
 
   const [adminResult, userResult] = await Promise.all([
 

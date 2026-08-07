@@ -5,12 +5,13 @@ export async function healthHandler(
     request: Request
 ){
     return json(
-        success(
-            "API healthy",
-            {
-                service:"bacatinta-api",
-                version:"1.0.0"
-            }
-        )
-    );
+    success(
+      "API healthy",
+      undefined,
+      {
+        service: "bacatinta-api",
+        version: "1.0.0",
+      }
+    )
+  );
 }
