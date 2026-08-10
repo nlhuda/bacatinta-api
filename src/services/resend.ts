@@ -1,4 +1,3 @@
-import { Resend } from "resend";
 import type { ContactForm } from "../types/contact";
 import type { WorkerEnv } from "../types/env";
 import { adminEmailTemplate } from "../templates/admin-email";
