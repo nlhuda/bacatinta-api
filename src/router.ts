@@ -16,6 +16,7 @@ export async function router(
 
   if (request.method === "OPTIONS") {
     return new Response(null, {
+      status: HTTP.NO_CONTENT,
       headers: getCorsHeaders(origin),
     });
   }

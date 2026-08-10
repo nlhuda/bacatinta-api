@@ -23,6 +23,11 @@ export function asyncHandler<TEnv>(
     } catch (error) {
       logger.error("Unhandled exception", error);
 
+       console.log("ERROR TYPE:", error?.constructor?.name);
+        console.log("IS APP ERROR:", error instanceof AppError);
+        console.log("ERROR:", error);
+
+
       if (error instanceof AppError) {
         return json(
           failure(
