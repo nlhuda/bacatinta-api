@@ -3,6 +3,7 @@ const allowedOrigins = [
   "https://nurulhuda.me",
   "https://bacatinta.com",
   "https://www.bacatinta.com",
+  "https://huda.bacatinta.com"
 ];
 
 export function getCorsHeaders(origin?: string | null) {
